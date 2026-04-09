@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { connectTenantDB } from "@/lib/db";
-import { cookies } from "next/headers";
 
 const JWT_SECRET = process.env.JWT_SECRET || "default_jwt_secret_change_me_in_prod";
+const LEGACY_ADMIN_EMAIL_ALIASES: Record<string, string[]> = {
+  "admin@khfood.com": ["khfoods@admin.com"],
+};
+
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,25 +21,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedEmail = normalizeEmail(email);
     const db = await connectTenantDB();
-    const userColl = await db.collection("users");
-    let user = await userColl.findOne({ email });
+    const user = await db.collection("users").findOne({
+      email: {
+        $in: [
+          normalizedEmail,
+          ...(LEGACY_ADMIN_EMAIL_ALIASES[normalizedEmail] || []),
+        ],
+      },
+    });
 
     if (!user) {
-      console.log(`❌ Login Failed: User not found (${email})`);
+      console.log(`Login failed: user not found (${normalizedEmail})`);
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 },
       );
     }
 
-    const isValid = await bcrypt.compare(password, user.password).catch((err) => {
+    const storedPassword = typeof user.password === "string" ? user.password : "";
+    const isValid = await bcrypt.compare(password, storedPassword).catch((err) => {
       console.error("Bcrypt error:", err);
       return false;
     });
 
-    if (!isValid && password !== user.password) {
-      console.log(`❌ Login Failed: Invalid password for ${email}`);
+    if (!isValid && password !== storedPassword) {
+      console.log(`Login failed: invalid password for ${normalizedEmail}`);
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 },
@@ -53,7 +65,7 @@ export async function POST(req: NextRequest) {
       { expiresIn: "1d" },
     );
 
-    console.log(`✅ Login Success: ${email}`);
+    console.log(`Login success: ${user.email}`);
 
     const response = NextResponse.json({
       success: true,
@@ -84,7 +96,11 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Login Error:", error);
     return NextResponse.json(
-      { success: false, message: "Central Processing Error" },
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Central Processing Error",
+      },
       { status: 500 },
     );
   }

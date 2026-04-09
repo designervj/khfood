@@ -122,7 +122,7 @@ export default function LoginPage() {
                       <div className="relative group/input">
                         <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-[#C8A97E] transition-colors" size={18} />
                         <Input 
-                          placeholder="admin@khfood.com" 
+                          placeholder="khfoods@admin.com" 
                           {...field} 
                           className="h-14 bg-black border-white/5 rounded-2xl pl-16 pr-6 text-white placeholder:text-white/10 focus:border-[#C8A97E]/40 outline-none transition-all"
                         />

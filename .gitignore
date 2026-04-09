@@ -9,4 +9,5 @@ tmp/
 .DS_Store
 *.log
 
-reference
+reference
+*.tsbuildinfo
