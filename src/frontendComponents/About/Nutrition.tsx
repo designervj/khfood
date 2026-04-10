@@ -236,7 +236,7 @@ const NutritionRow = ({ label, value, dv, bold, nested }: any) => (
 const Feature = ({ icon, title, desc }: any) => (
   <div className="text-center group">
     <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center text-[#ecb984] mx-auto mb-6 group-hover:bg-[#ecb984] group-hover:text-slate-950 transition-all duration-500">
-      {React.cloneElement(icon as React.ReactElement, { className: 'w-8 h-8' })}
+      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-8 h-8' })}
     </div>
     <h4 className="text-white font-black uppercase text-sm tracking-widest mb-1">{title}</h4>
     <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">{desc}</p>
